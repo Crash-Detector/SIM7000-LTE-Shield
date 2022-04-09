@@ -59,13 +59,6 @@ typedef struct Cell_Module
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
-//------------------------------------------------------------------------------------------------
-//
-//            UARTS Function Declarations
-//
-//------------------------------------------------------------------------------------------------
-void  flush_input( UART_HandleTypeDef *serial_ptr ); 
-
 /* USER CODE BEGIN EFP */
 
 
