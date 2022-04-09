@@ -2,21 +2,37 @@
 #ifndef HAL_FONA_H
 #define HAL_FONA_H
 
-enum boolean { false, true };
-#include <stdbool.h>
+// enum boolean { false, true };
+#include <stdbool.h>   // For bool
 #include <assert.h>
 #include <cstddef> // For size_t
 
 char const * const ok_reply_c = "OK";
 
+/* Exported macro ------------------------------------------------------------*/
+/* USER CODE BEGIN EM */
 #define BUFF_SIZE 32
 #define REPLY_BUFF_SIZE 256
+#define FONA_DEFAULT_TIMEOUT_MS 500
+
+/* USER CODE END EM */
 
 typedef struct {
     UART_HandleTypeDef *uart_ptr;
-    char reply_buffer[ 256 ];
+    char reply_buffer[ 256 ];       // Place where reply lives (avoids malloc which has unpredictable behavior)
 } Cellular_module_t;
 
+
+//------------------------------------------------------------------------------------------------
+//
+//                                  UARTS Functions Declaration
+//
+//------------------------------------------------------------------------------------------------
+// char read( UART_HandleTypeDef * const uart_ptr );
+
+// Flushes all characters inside buffer.
+void flushInput( UART_HandleTypeDef * const uart_ptr );
+void println( UART_HandleTypeDef * const uart_ptr, const char * const message  );
 typedef struct {
     size_t s_elem, n_elem;
     uint8_t buf[BUFF_SIZE];
@@ -25,46 +41,49 @@ typedef struct {
 } Ring_Buffer_t;
 
 
-bool begin( Cellular_module_t * const cell_ptr );
 
-int available( Cellular_module_t * const cell_mod_ptr );
+
+bool begin( Cellular_module_t * const cell_ptr );
+uint8_t readline( Celluar_module_t * cell_ptr, uint18_t timeout, bool multiline );
+// int available( Cellular_module_t * const cell_mod_ptr );
 size_t write(Cellular_module_t * const cell_mod_ptr, uint8_t x);
-boolean read( Cellular_module_t * const cell_mod_ptr );
+bool read( Cellular_module_t * const cell_mod_ptr );
 int peek(void);
 void flush();
+void flushInput( UART_HandleTypeDef * const uart_ptr ); // Flush input.
 
-boolean parseReply(  Cellular_module_t * const cell_mod_ptr, FONAFlashStringPtr toreply,
+bool parseReply(  Cellular_module_t * const cell_mod_ptr, FONAFlashStringPtr toreply,
         uint16_t *v, char divider  = ',', uint8_t index=0);
-boolean parseReplyFloat( Cellular_module_t * const cell_mod_ptr, FONAFlashStringPtr toreply,
+bool parseReplyFloat( Cellular_module_t * const cell_mod_ptr, FONAFlashStringPtr toreply,
            float *f, char divider, uint8_t index);
-boolean parseReply(FONAFlashStringPtr toreply,
+bool parseReply(FONAFlashStringPtr toreply,
            char *v, char divider  = ',', uint8_t index=0);
-boolean parseReplyQuoted(FONAFlashStringPtr toreply,
+bool parseReplyQuoted(FONAFlashStringPtr toreply,
            char *v, int maxlen, char divider, uint8_t index);
 
 // Network connection (AT+CNACT)
-boolean openWirelessConnection(bool onoff);
-boolean wirelessConnStatus(void);
+bool openWirelessConnection(bool onoff);
+bool wirelessConnStatus(void);
 
 // GPS handling
-boolean enableGPS(boolean onoff);
+bool enableGPS(bool onoff);
 int8_t GPSstatus(void);
 uint8_t getGPS(uint8_t arg, char *buffer, uint8_t maxbuff);
-boolean getGPS(float *lat, float *lon, float *speed_kph=0, float *heading=0, float *altitude=0);
-//boolean getGPS(float *lat, float *lon, float *speed_kph, float *heading, float *altitude,
+bool getGPS(float *lat, float *lon, float *speed_kph=0, float *heading=0, float *altitude=0);
+//bool getGPS(float *lat, float *lon, float *speed_kph, float *heading, float *altitude,
 // uint16_t *year = NULL, uint8_t *month = NULL, uint8_t *day = NULL, uint8_t *hour = NULL, uint8_t *min = NULL, float *sec = NULL);
-boolean enableGPSNMEA(uint8_t nmea);
+bool enableGPSNMEA(uint8_t nmea);
 
 // Power, battery, and ADC
 void powerOn(uint8_t FONA_PWRKEY);
-boolean powerDown(void);
-boolean getADCVoltage(uint16_t *v);
-boolean getBattPercent(uint16_t *p);
-boolean getBattVoltage(uint16_t *v);
+bool powerDown(void);
+bool getADCVoltage(uint16_t *v);
+bool getBattPercent(uint16_t *p);
+bool getBattVoltage(uint16_t *v);
 
 // Functionality and operation mode settings
-boolean setFunctionality(uint8_t option); // AT+CFUN command
-boolean enableSleepMode(bool onoff); // AT+CSCLK command
+bool setFunctionality(uint8_t option); // AT+CFUN command
+bool enableSleepMode(bool onoff); // AT+CSCLK command
 
 // SIM query
 uint8_t unlockSIM(char *pin);
@@ -72,14 +91,14 @@ uint8_t getSIMCCID(char *ccid);
 uint8_t getNetworkStatus(void);
 
 // SMS handling
-boolean setSMSInterrupt(uint8_t i); // Probably can't be used since we can't see.
+bool setSMSInterrupt(uint8_t i); // Probably can't be used since we can't see.
 uint8_t getSMSInterrupt(void);      
 int8_t getNumSMS(void);
-boolean readSMS(uint8_t i, char *smsbuff, uint16_t max, uint16_t *readsize);
-boolean sendSMS(const char *smsaddr, const char *smsmsg); //! Needed
-boolean deleteSMS(uint8_t i);
-boolean deleteAllSMS(void);
-boolean getSMSSender(uint8_t i, char *sender, int senderlen);
-boolean sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen, uint16_t *readlen);
+bool readSMS(uint8_t i, char *smsbuff, uint16_t max, uint16_t *readsize);
+bool sendSMS(const char *smsaddr, const char *smsmsg); //! Needed
+bool deleteSMS(uint8_t i);
+bool deleteAllSMS(void);
+bool getSMSSender(uint8_t i, char *sender, int senderlen);
+bool sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen, uint16_t *readlen);
 
 #endif // HAL_FONA_H
