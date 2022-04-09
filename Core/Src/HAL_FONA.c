@@ -122,7 +122,7 @@ uint8_t transmit( Cellular_module_t * const cell_ptr, char const * const send, u
 uint8_t readline( Cellular_module_t * const cell_ptr, uint16_t timeout, bool multiline )
     {
     uint16_t replyidx = 0;
-    HAL_StatusTypeDef ret_type;
+    HAL_StatusTypeDef ret_type = HAL_OK;
     const int iterations = multiline ? 2 : 1;
 
     // Multiline ensures that we go e
@@ -138,10 +138,15 @@ uint8_t readline( Cellular_module_t * const cell_ptr, uint16_t timeout, bool mul
                 // Used to skip the first <CR><LR> in a response.
                 if ( c_in != '\r' ) // Skip the carrage return character (This is present in responses).
                     {
-                    if ( c_in == '\n' && replyidx == 0 ) // Typcially used to skip first <LR>
-                        c_in = 0; // As to not trigger while loop condition
+                    if ( c_in == '\n' )  // Don't insert the <LR> into the return buffer.
+                        {
+                        if ( !replyidx ) // Typcially used to skip first <LR>
+                            c_in = 0; // As to not trigger while loop condition
+                        } // end if
                     else
+                        {
                         cell_ptr->reply_buffer[ replyidx++ ] = c_in;
+                        } // end else
                     } // end if
                 } // end while
             // Decrement on a non_HAL_OK (b/c otherwise c_in == '\n')
