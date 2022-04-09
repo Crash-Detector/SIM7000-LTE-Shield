@@ -3,15 +3,29 @@
 #define HAL_FONA_H
 
 enum boolean { false, true };
-
+#include <stdbool.h>
+#include <assert.h>
 #include <cstddef> // For size_t
+
+char const * const ok_reply_c = "OK";
+
+#define BUFF_SIZE 32
+#define REPLY_BUFF_SIZE 256
 
 typedef struct {
     UART_HandleTypeDef *uart_ptr;
-    char 
-
+    char reply_buffer[ 256 ];
 } Cellular_module_t;
 
+typedef struct {
+    size_t s_elem, n_elem;
+    uint8_t buf[BUFF_SIZE];
+    volatile size_t head;
+    volatile size_t tail;
+} Ring_Buffer_t;
+
+
+bool begin( Cellular_module_t * const cell_ptr );
 
 int available( Cellular_module_t * const cell_mod_ptr );
 size_t write(Cellular_module_t * const cell_mod_ptr, uint8_t x);

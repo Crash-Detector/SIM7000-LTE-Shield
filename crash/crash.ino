@@ -4,8 +4,8 @@
 #define FONA_RST 7
 //#define FONA_DTR 8 // Connect with solder jumper
 //#define FONA_RI 9 // Need to enable via AT commands
-#define FONA_TX 10 // Microcontroller RX
-#define FONA_RX 11 // Microcontroller TX
+#define FONA_TX 10 // Microcontroller TX
+#define FONA_RX 11 // Microcontroller RX
 //#define T_ALERT 12 // Connect with solder jumper
 
 #include <SoftwareSerial.h>

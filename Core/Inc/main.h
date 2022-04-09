@@ -37,6 +37,13 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
+typedef struct Cell_Module
+    {
+    UART_HandleTypeDef *serial;
+
+
+    } Cell_M_t;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -52,7 +59,16 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
+//------------------------------------------------------------------------------------------------
+//
+//            UARTS Function Declarations
+//
+//------------------------------------------------------------------------------------------------
+void  flush_input( UART_HandleTypeDef *serial_ptr ); 
+
 /* USER CODE BEGIN EFP */
+
+
 
 /* USER CODE END EFP */
 
