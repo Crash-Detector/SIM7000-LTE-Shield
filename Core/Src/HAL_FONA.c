@@ -28,12 +28,11 @@ bool begin( Cellular_module_t * const cell_ptr )
     
     if ( cell_ptr->uart_ptr )
         {
-        
         printf( "Attempting to open comm with ATs\n\r" );
 
         int16_t timeout = 7000;
 
-        while( timeout )
+        while( timeout > 0 )
             {
             flushInput( cell_ptr->uart_ptr );
             if ( send_check_reply( cell_ptr, "AT", ok_reply_c, FONA_DEFAULT_TIMEOUT_MS ) )
@@ -70,6 +69,7 @@ bool begin( Cellular_module_t * const cell_ptr )
 
             printf( "\t<--- %s\n", cell_ptr->reply_buffer );
             
+            // Nucleo confirms operating with right Cell Module.
             if ( strstr( cell_ptr->reply_buffer, "SIM7000A" ) != NULL )
                 {
                 char buffer[ 1024 ];
@@ -78,7 +78,7 @@ bool begin( Cellular_module_t * const cell_ptr )
                 return true;
                 } // end if
             else 
-                printf( "COuldn't find right revision!\n");
+                printf( "Couldn't find right revision!\n");
             } // end if
         } // end if
     return false;
@@ -133,14 +133,14 @@ uint8_t readline( Cellular_module_t * const cell_ptr, uint16_t timeout, bool mul
             char c_in = 0;  // Read into from
 
             // Continue until a newline is received.
-            while( c_in != '\n' && ( ret_type = HAL_UART_Receive( cell_ptr->uart_ptr, (uint8_t *)&c_in, 1, 1 ) ) == HAL_OK )
+            while( replyidx != REPLY_BUFF_SIZE && c_in != '\n' && ( ret_type = HAL_UART_Receive( cell_ptr->uart_ptr, (uint8_t *)&c_in, 1, 1 ) ) == HAL_OK )
                 {
                 // Used to skip the first <CR><LR> in a response.
                 if ( c_in != '\r' ) // Skip the carrage return character (This is present in responses).
                     {
                     if ( c_in == '\n' )  // Don't insert the <LR> into the return buffer.
                         {
-                        if ( !replyidx ) // Typcially used to skip first <LR>
+                        if ( !replyidx ) // Used to skip first <LR>
                             c_in = 0; // As to not trigger while loop condition
                         } // end if
                     else
@@ -159,7 +159,7 @@ uint8_t readline( Cellular_module_t * const cell_ptr, uint16_t timeout, bool mul
 
             } // end while
         } // end for
-    if ( ret_type == HAL_ERROR || !timeout )
+    if ( ret_type == HAL_ERROR || !timeout || replyidx == REPLY_BUFF_SIZE )
         {
         return REPLY_BUFF_SIZE; // Invalid buffer size.
         } // end if
