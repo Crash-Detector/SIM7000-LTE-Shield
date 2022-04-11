@@ -25,6 +25,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+extern char const * const ok_reply_c;
+extern const int reply_buff_size_c;
+extern const int fona_def_timeout_ms_c;
+
+extern const HAL_GPIO_t rst_pin; // PF13
+extern const HAL_GPIO_t pwr_pin; // PE09
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +51,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef hlpuart1;
-UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
@@ -55,26 +62,31 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_USART3_UART_Init(void);
-static void MX_UART4_Init(void);
 /* USER CODE BEGIN PFP */
 
-void power_on(  );
+void power_on_cell(  );
+void reset_cell( );
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void power_on( )
+void power_on_cell( )
     {
-
-	//GPIO_PinState pin_state =
-
-	HAL_GPIO_WritePin( GPIOE, GPIO_PIN_9, 0 ); // power_key
+	printf( "Powering On Cell\n\r" );
+    GPIO_Write( &pwr_pin, GPIO_PIN_RESET );
 	HAL_Delay( 1100 ); // At least 1s
-
-	HAL_GPIO_WritePin( GPIOE, GPIO_PIN_9, 1 ); // power_key
+    GPIO_Write( &pwr_pin, GPIO_PIN_SET );
     } // end power_on( )
+
+void reset_cell( )
+   {
+	printf( "Resetting Cell\n\r" );
+   GPIO_Write( &rst_pin, GPIO_PIN_RESET );
+   HAL_Delay( 100 ); // At least 1s
+   GPIO_Write( &rst_pin, GPIO_PIN_SET );
+   } // reset_cell( )
 
 
 /* USER CODE END 0 */
@@ -100,7 +112,7 @@ int main(void)
   printf( "Initializing....(May take several seconds)\n\r");
 
 
-  cell.uart_ptr = &huart4;
+  cell.uart_ptr = &huart3;
 
 
   /* USER CODE END Init */
@@ -118,19 +130,18 @@ int main(void)
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
   MX_USART3_UART_Init();
-  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_GPIO_WritePin( GPIOF, GPIO_PIN_13, 1 ); // rst_pin
-  power_on( );
-  if ( begin( &cell ) )
+  power_on_cell( );
+  reset_cell( );
+  if ( !begin( &cell ) )
      {
-	 printf( "Failed upon initialization\n\r" );
-	 exit( 1 );
+	 printf( "Failed initialization\n\r" );
+	 return 1;
      }
   else
      {
-	 printf( "Found SIM7000 using hardware serial");
+	 printf( "Found SIM7000 using hardware serial\n\r " );
      }
   /* USER CODE END 2 */
 
@@ -139,7 +150,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+   printf( "Looping weehee\n\r" );
+   HAL_Delay( 1000 );
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -236,54 +248,6 @@ static void MX_LPUART1_UART_Init(void)
 }
 
 /**
-  * @brief UART4 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_UART4_Init(void)
-{
-
-  /* USER CODE BEGIN UART4_Init 0 */
-
-  /* USER CODE END UART4_Init 0 */
-
-  /* USER CODE BEGIN UART4_Init 1 */
-
-  /* USER CODE END UART4_Init 1 */
-  huart4.Instance = UART4;
-  huart4.Init.BaudRate = 115200;
-  huart4.Init.WordLength = UART_WORDLENGTH_8B;
-  huart4.Init.StopBits = UART_STOPBITS_1;
-  huart4.Init.Parity = UART_PARITY_NONE;
-  huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart4.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-  huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_SetTxFifoThreshold(&huart4, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_SetRxFifoThreshold(&huart4, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_EnableFifoMode(&huart4) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN UART4_Init 2 */
-
-  /* USER CODE END UART4_Init 2 */
-
-}
-
-/**
   * @brief USART3 Initialization Function
   * @param None
   * @retval None
@@ -308,16 +272,17 @@ static void MX_USART3_UART_Init(void)
   huart3.Init.OverSampling = UART_OVERSAMPLING_16;
   huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart3.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXOVERRUNDISABLE_INIT;
+  huart3.AdvancedInit.OverrunDisable = UART_ADVFEATURE_OVERRUN_DISABLE;
   if (HAL_UART_Init(&huart3) != HAL_OK)
   {
     Error_Handler();
   }
-  if (HAL_UARTEx_SetTxFifoThreshold(&huart3, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart3, UART_TXFIFO_THRESHOLD_7_8) != HAL_OK)
   {
     Error_Handler();
   }
-  if (HAL_UARTEx_SetRxFifoThreshold(&huart3, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart3, UART_RXFIFO_THRESHOLD_7_8) != HAL_OK)
   {
     Error_Handler();
   }
@@ -382,9 +347,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PC0 PC1 PC2 PC3
-                           PC4 PC5 */
+                           PC4 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5;
+                          |GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -463,14 +428,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF3_TIM1_COMP1;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_10;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PB12 PB13 PB15 */
   GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -524,6 +481,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC10 PC11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF8_UART4;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PD0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;

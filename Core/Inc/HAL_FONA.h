@@ -5,22 +5,37 @@
 // enum boolean { false, true };
 #include <stdbool.h>   // For bool
 #include <assert.h>
+#include <stdint.h> // Allow for larger ints?
 #include "main.h"
 
 extern char const * const ok_reply_c;
+extern const int reply_buff_size_c;
+extern const int fona_def_timeout_ms_c;
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 #define BUFF_SIZE 32
-#define REPLY_BUFF_SIZE 256
-#define FONA_DEFAULT_TIMEOUT_MS 500
+//#define REPLY_BUFF_SIZE 256
+//#define FONA_DEFAULT_TIMEOUT_MS 500
+
+
 
 /* USER CODE END EM */
 
 typedef struct {
     UART_HandleTypeDef *uart_ptr;
-    char reply_buffer[ REPLY_BUFF_SIZE ];       // Place where reply lives (avoids malloc which has unpredictable behavior)
+    char reply_buffer[ 256 ];       // Place where reply lives (avoids malloc which has unpredictable behavior)
 } Cellular_module_t;
+
+typedef struct {
+    GPIO_TypeDef* GPIOx     ;
+    uint16_t      GPIO_Pin  ;
+} HAL_GPIO_t;
+
+void GPIO_Write( HAL_GPIO_t const * const gpio_ptr, const GPIO_PinState pin_state );
+
+extern const HAL_GPIO_t rst_pin;
+extern const HAL_GPIO_t pwr_pin;
 
 
 //------------------------------------------------------------------------------------------------

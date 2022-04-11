@@ -1,6 +1,8 @@
-HAL_FONA.c:26:6:begin	1056	static
-HAL_FONA.c:88:6:send_check_reply	24	static
-HAL_FONA.c:96:9:transmit	1064	static
-HAL_FONA.c:122:9:readline	32	static
-HAL_FONA.c:174:6:flushInput	24	static
-HAL_FONA.c:180:6:println	16	static
+HAL_FONA.c:14:6:print_char	24	static
+HAL_FONA.c:26:6:GPIO_Write	16	static
+HAL_FONA.c:50:6:begin	1056	static
+HAL_FONA.c:112:6:send_check_reply	24	static
+HAL_FONA.c:120:9:transmit	1064	static
+HAL_FONA.c:155:9:readline	56	static
+HAL_FONA.c:202:6:flushInput	24	static
+HAL_FONA.c:210:6:println	16	static
