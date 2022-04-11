@@ -15,6 +15,7 @@ extern const int fona_def_timeout_ms_c;
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 #define BUFF_SIZE 32
+#define DEBUG_CELL
 //#define REPLY_BUFF_SIZE 256
 //#define FONA_DEFAULT_TIMEOUT_MS 500
 

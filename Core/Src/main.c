@@ -74,19 +74,19 @@ void reset_cell( );
 
 void power_on_cell( )
     {
-	printf( "Powering On Cell\n\r" );
+    printf( "Powering On Cell\n\r" );
     GPIO_Write( &pwr_pin, GPIO_PIN_RESET );
-	HAL_Delay( 1100 ); // At least 1s
+	  HAL_Delay( 1100 ); // At least 1s
     GPIO_Write( &pwr_pin, GPIO_PIN_SET );
     } // end power_on( )
 
 void reset_cell( )
-   {
-	printf( "Resetting Cell\n\r" );
-   GPIO_Write( &rst_pin, GPIO_PIN_RESET );
-   HAL_Delay( 100 ); // At least 1s
-   GPIO_Write( &rst_pin, GPIO_PIN_SET );
-   } // reset_cell( )
+    {
+    printf( "Resetting Cell\n\r" );
+    GPIO_Write( &rst_pin, GPIO_PIN_RESET );
+    HAL_Delay( 100 ); // At least 1s
+    GPIO_Write( &rst_pin, GPIO_PIN_SET );
+    } // reset_cell( )
 
 
 /* USER CODE END 0 */
@@ -135,25 +135,25 @@ int main(void)
   power_on_cell( );
   reset_cell( );
   if ( !begin( &cell ) )
-     {
-	 printf( "Failed initialization\n\r" );
-	 return 1;
-     }
+    {
+    printf( "Failed initialization\n\r" );
+    return 1;
+    }
   else
-     {
-	 printf( "Found SIM7000 using hardware serial\n\r " );
-     }
+    {
+    printf( "Found SIM7000 using hardware serial\n\r" );
+    }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
+    {
     /* USER CODE END WHILE */
-   printf( "Looping weehee\n\r" );
-   HAL_Delay( 1000 );
+    printf( "Looping weehee\n\r" );
+    HAL_Delay( 1000 );
     /* USER CODE BEGIN 3 */
-  }
+    } // end while
   /* USER CODE END 3 */
 }
 

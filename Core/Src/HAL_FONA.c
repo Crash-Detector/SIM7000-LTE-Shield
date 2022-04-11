@@ -96,7 +96,7 @@ bool begin( Cellular_module_t * const cell_ptr )
             // Nucleo confirms operating with right Cell Module.
             if ( strstr( cell_ptr->reply_buffer, "SIM7000A" ) != NULL )
                 {
-                char buffer[ 1024 ];
+                char buffer[ 32 ];
                 sprintf( buffer,  "AT+CPMS=%s,%s,%s", "\"SM\"", "\"SM\"", "\"SM\"" );
                 send_check_reply( cell_ptr, buffer, ok_reply_c, fona_def_timeout_ms_c );
                 return true;
@@ -125,22 +125,30 @@ uint8_t transmit( Cellular_module_t * const cell_ptr, char const * const send, u
     if ( sprintf( send_buff, "%s\r", send ) < 0 ) // At in <CR><LR>
         {
         printf( "Failed to put into sprintf\n\r" );
-        return fona_def_timeout_ms_c;
+        return reply_buff_size_c;
         } // end if
     
     flushInput( cell_ptr->uart_ptr );
+
+#ifdef DEBUG_CELL
     printf( "\t---> %s\n\r", send );
+#endif
+
 
     if ( HAL_UART_Transmit( cell_ptr->uart_ptr, ( uint8_t *) send_buff, strlen( send_buff ), timeout ) == HAL_OK )
-       {
-       idx = readline( cell_ptr, timeout, false );
-       printf( "Got: %s\n\r", cell_ptr->reply_buffer );
-       } // end if
+        {
+        idx = readline( cell_ptr, timeout, false );
+#ifdef DEBUG_CELL
+        printf( "Got: %s\n\r", cell_ptr->reply_buffer );
+#endif
+        } // end if
     else
-       {
-    	printf( "Failed Transmit\n\r" );
-    	idx = reply_buff_size_c;
-       } // end else
+        {
+#ifdef DEBUG_CELL
+        printf( "Failed Transmit\n\r" );
+#endif
+        idx = reply_buff_size_c;
+        } // end else
 
     return idx;
     } // transmit( )
@@ -158,27 +166,28 @@ uint8_t readline( Cellular_module_t * const cell_ptr, uint16_t timeout, bool mul
     char * buff_ptr = receive_buff;
     uint16_t bytes_recvd, replyidx, newlines_seen;
     bytes_recvd = replyidx = newlines_seen = 0;
-    const int iterations = multiline ? 2 : 1;
 
     // Multiline ensures that we check newline twice
+    const int iterations = multiline ? 2 : 1;
 
-    // Receive as much as possible
-    while( HAL_UART_Receive( cell_ptr->uart_ptr, (uint8_t *)( buff_ptr++ ), 1, timeout ) == HAL_OK ) // Keep going
+    // Receive everything until we time out
+    while( HAL_UART_Receive( cell_ptr->uart_ptr, (uint8_t *)( buff_ptr++ ), 1, timeout ) == HAL_OK )
         {
         ++bytes_recvd; // Count bytes received
         } // end while
-    for ( char const * ptr = receive_buff, *end_ptr = receive_buff + bytes_recvd; ptr != end_ptr; ++ptr )
+#ifdef DEBUG_CELL
+    for ( char const * ptr = receive_buff, * const end_ptr = receive_buff + bytes_recvd; ptr != end_ptr; ++ptr )
     	print_char( *ptr );
-
+#endif
     for ( int idx = 0, newlines_seen = 0; idx < bytes_recvd && newlines_seen < iterations; ++idx )
         {
-    	const char c_in = receive_buff[ idx ];
+        const char c_in = receive_buff[ idx ];
         // Used to skip the first <CR><LR> in a response.
         if ( c_in != '\r' ) // Skip the carrage return character (This is present in responses).
             {
             if ( c_in == '\n' )  // Don't insert the <LR> into the return buffer.
                 {
-                if ( replyidx ) // Used to skip first <LR> (and not count as seen)
+                if ( replyidx )  // Don't count first <LR> seen (before anything's been inserted)
                     ++newlines_seen;
                 } // end if
             else
@@ -187,7 +196,11 @@ uint8_t readline( Cellular_module_t * const cell_ptr, uint16_t timeout, bool mul
                 } // end else
             } // end if
         } // end for
-
+    if ( replyidx >= reply_buff_size_c )
+        {
+    	printf( "Reply exceeded buffer size!\n\r" );
+    	replyidx = reply_buff_size_c - 1; // To prevent out of bounds indexing.
+        } // end if
     cell_ptr->reply_buffer[ replyidx ] = '\0'; // Null-terminate
     return replyidx;
     } // end readline( )
@@ -202,9 +215,15 @@ uint8_t readline( Cellular_module_t * const cell_ptr, uint16_t timeout, bool mul
 void flushInput( UART_HandleTypeDef * const uart_ptr )
     {
     char c_in;
+#ifdef DEBUG_CELL
     printf( "Flushing Input\n\r" );
+#endif
     while( HAL_UART_Receive( uart_ptr, (uint8_t *)&c_in, 1, 100 ) == HAL_OK )
-    	print_char( c_in );
+        {
+#ifdef DEBUG_CELL
+        print_char( c_in );
+#endif
+        } // end while
     } // end flush_Input
 
 void println( UART_HandleTypeDef * const uart_ptr, const char * const message )
