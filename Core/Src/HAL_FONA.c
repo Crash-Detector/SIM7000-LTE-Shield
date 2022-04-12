@@ -105,7 +105,7 @@ bool begin( Cellular_module_t * const cell_ptr )
                 printf( "Couldn't find right revision!\n");
             } // end if
         } // end if
-    return false;
+    	return false;
     } // end begin( )
 
 
@@ -185,7 +185,7 @@ uint8_t readline( Cellular_module_t * const cell_ptr, const uint16_t timeout, co
         printf( "Ran out of space in receive_buff\n\r" );
 #endif
 
-    for ( char const *ptr = receive_buff, *const end_ptr = buff_ptr; 
+    for ( char const *ptr = receive_buff, *const end_ptr = buff_ptr;
         ptr != end_ptr && newlines_seen < iter_c; ++ptr )
         {
         const char c_in = *ptr;
@@ -194,7 +194,7 @@ uint8_t readline( Cellular_module_t * const cell_ptr, const uint16_t timeout, co
             {
             if ( c_in == '\n' )  // Don't insert the <LR> into the return buffer.
                 {
-                if ( reply_ptr != cell_ptr->reply_buffer )  
+                if ( reply_ptr != cell_ptr->reply_buffer )
                     ++newlines_seen;
                 //Else Don't count first <LR> seen (before anything's been inserted)
                 } // end if
@@ -248,3 +248,70 @@ void println( UART_HandleTypeDef * const uart_ptr, const char * const message )
 } HAL_StatusTypeDef;
 
  */
+
+//------------------------------------------------------------------------------------------------
+//
+//                                  Network Settings
+//
+//------------------------------------------------------------------------------------------------
+
+bool setNetworkSettings(Cellular_module_t * const cell_ptr){
+
+	//if ( send_check_reply( cell_ptr, "AT+CGDCONT=1,\"IP\",\"hologram"", ok_reply_c, 10000 ) )
+	flushInput( cell_ptr->uart_ptr );
+	if ( send_check_reply( cell_ptr, "AT+CGDCONT=1,\"IP\",\"hologram\"", ok_reply_c, 10000 ) ){
+		return true;
+	}
+	return false;
+}
+
+bool sendSMS(Cellular_module_t * const cell_ptr){
+
+	flushInput( cell_ptr->uart_ptr );
+
+	if ( !send_check_reply( cell_ptr, "AT+CMGF=1", ok_reply_c, fona_def_timeout_ms_c ) ){
+	printf("Failed sendCheckReply");
+	return false;
+	}
+
+	//if (! sendCheckReply("AT+CMGS=\"18024246417\"", "> ")) return false;
+	if ( !send_check_reply( cell_ptr, "AT+CMGS=\"18024246417\"", "> ", fona_def_timeout_ms_c ) ){
+	printf("Failed establishing phone address");
+	return false;
+	}
+
+	char *pass_buff = "eecs373";
+	uint8_t buffer_pass[1024];
+	sprintf(buffer_pass,"%s%c",pass_buff,26);
+	HAL_UART_Transmit( cell_ptr->uart_ptr, ( uint8_t * ) buffer_pass, strlen( buffer_pass ), fona_def_timeout_ms_c );
+	//transmit( cell_ptr,  "hi" , fona_def_timeout_ms_c );
+	//transmit( cell_ptr,  &pass_buff , fona_def_timeout_ms_c );
+	readline(cell_ptr, 200, false);
+
+	readline(cell_ptr, 200, false);
+
+	readline(cell_ptr, 30000, false);
+
+	if (strstr(cell_ptr->reply_buffer, "+CMGS") == 0) {
+		return false;
+	}
+
+	readline(cell_ptr, 1000, false);
+
+
+	if (strcmp(cell_ptr->reply_buffer, "OK") != 0) {
+	    return false;
+	}
+
+	return true;
+
+}
+/*
+
+uint8_t getNetworkStatus(){
+	uint16_t status;
+	//if (! sendParseReply(F("AT+CGREG?"), F("+CGREG: "), &status, ',', 1)) return 0;
+
+}*/
+
+
