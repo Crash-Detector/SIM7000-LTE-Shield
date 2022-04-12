@@ -61,7 +61,7 @@ typedef struct {
 
 
 bool begin( Cellular_module_t * const cell_ptr );
-uint8_t readline( Cellular_module_t * const cell_ptr, uint16_t timeout, bool multiline );
+uint8_t readline( Cellular_module_t * const cell_ptr, const uint16_t timeout, const bool multiline );
 bool send_check_reply( Cellular_module_t * const cell_ptr, char const * const send,
                         char const * const reply, const uint16_t timeout );
 // int available( Cellular_module_t * const cell_mod_ptr );

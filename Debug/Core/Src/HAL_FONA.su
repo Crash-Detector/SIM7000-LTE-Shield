@@ -4,5 +4,5 @@ HAL_FONA.c:50:6:begin	64	static
 HAL_FONA.c:112:6:send_check_reply	24	static
 HAL_FONA.c:120:9:transmit	1064	static
 HAL_FONA.c:163:9:readline	56	static
-HAL_FONA.c:215:6:flushInput	24	static
-HAL_FONA.c:229:6:println	16	static
+HAL_FONA.c:223:6:flushInput	24	static
+HAL_FONA.c:237:6:println	16	static

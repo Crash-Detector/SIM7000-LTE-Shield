@@ -158,51 +158,59 @@ uint8_t transmit( Cellular_module_t * const cell_ptr, char const * const send, u
  * REQUIRES: N/A
  * MODIFIES: Cellular_module_t::replay_buffer (where reply exists)
  *  EFFECTS: Receives characters from UARTS Rx pin (from the Nucleo board's perspective)
- *           up to the first \r\n and places it into the reply_buffer.
+ *           up to the first (if multiline == false, else second) \r\n and places it into the reply_buffer.
 */
-uint8_t readline( Cellular_module_t * const cell_ptr, uint16_t timeout, bool multiline )
+uint8_t readline( Cellular_module_t * const cell_ptr, const uint16_t timeout, const bool multiline )
     {
     static char receive_buff[ 1024 ];
-    char * buff_ptr = receive_buff;
-    uint16_t bytes_recvd, replyidx, newlines_seen;
-    bytes_recvd = replyidx = newlines_seen = 0;
+    static char const * const buff_end_c = receive_buff + sizeof( receive_buff );
+
+    char *buff_ptr = receive_buff;  //! buff_ptr will eventually point to the end of the bytes received.
+    char *reply_ptr = cell_ptr->reply_buffer; // Points to the reply_buffer
+    uint16_t newlines_seen;
+    newlines_seen = 0;
 
     // Multiline ensures that we check newline twice
-    const int iterations = multiline ? 2 : 1;
+    const int iter_c = multiline ? 2 : 1;
 
-    // Receive everything until we time out
-    while( HAL_UART_Receive( cell_ptr->uart_ptr, (uint8_t *)( buff_ptr++ ), 1, timeout ) == HAL_OK )
+    // Receive everything until we time out OR run out of space
+    while( buff_ptr != buff_end_c && HAL_UART_Receive( cell_ptr->uart_ptr, (uint8_t *)( buff_ptr ), 1, timeout ) == HAL_OK )
         {
-        ++bytes_recvd; // Count bytes received
+        ++buff_ptr;    // Increment pointer
         } // end while
 #ifdef DEBUG_CELL
-    for ( char const * ptr = receive_buff, * const end_ptr = receive_buff + bytes_recvd; ptr != end_ptr; ++ptr )
+    for ( char const *ptr = receive_buff, * const end_ptr = buff_ptr; ptr != end_ptr; ++ptr )
     	print_char( *ptr );
+    if ( buff_ptr == buff_end_c )
+        printf( "Ran out of space in receive_buff\n\r" );
 #endif
-    for ( int idx = 0, newlines_seen = 0; idx < bytes_recvd && newlines_seen < iterations; ++idx )
+
+    for ( char const *ptr = receive_buff, *const end_ptr = buff_ptr; 
+        ptr != end_ptr && newlines_seen < iter_c; ++ptr )
         {
-        const char c_in = receive_buff[ idx ];
+        const char c_in = *ptr;
         // Used to skip the first <CR><LR> in a response.
         if ( c_in != '\r' ) // Skip the carrage return character (This is present in responses).
             {
             if ( c_in == '\n' )  // Don't insert the <LR> into the return buffer.
                 {
-                if ( replyidx )  // Don't count first <LR> seen (before anything's been inserted)
+                if ( reply_ptr != cell_ptr->reply_buffer )  
                     ++newlines_seen;
+                //Else Don't count first <LR> seen (before anything's been inserted)
                 } // end if
             else
                 {
-                cell_ptr->reply_buffer[ replyidx++ ] = c_in;
+                *reply_ptr++ = c_in; // Dereferences, assigns, and then post_increment.
                 } // end else
             } // end if
         } // end for
-    if ( replyidx >= reply_buff_size_c )
+    if ( reply_ptr == cell_ptr->reply_buffer + sizeof( cell_ptr->reply_buffer ) )
         {
-    	printf( "Reply exceeded buffer size!\n\r" );
-    	replyidx = reply_buff_size_c - 1; // To prevent out of bounds indexing.
+        printf( "Reply exceeded buffer size!\n\r" );
+        reply_ptr = cell_ptr->reply_buffer + sizeof( cell_ptr->reply_buffer ) - 1; // To prevent out of bounds indexing.
         } // end if
-    cell_ptr->reply_buffer[ replyidx ] = '\0'; // Null-terminate
-    return replyidx;
+    *reply_ptr = '\0'; // Null-terminate
+    return ( uint8_t)( reply_ptr - cell_ptr->reply_buffer );
     } // end readline( )
 
 //------------------------------------------------------------------------------------------------
