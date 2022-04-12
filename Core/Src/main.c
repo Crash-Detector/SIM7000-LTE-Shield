@@ -143,6 +143,29 @@ int main(void)
     {
     printf( "Found SIM7000 using hardware serial\n\r" );
     }
+
+
+  if ( !setNetworkSettings( &cell ) )
+      {
+      printf( "Network settings NOT set\n\r" );
+      return 1;
+      }
+    else
+      {
+      printf( "Network settings set\n\r" );
+      }
+
+  if ( !sendSMS( &cell ) )
+        {
+        printf( "SMS failed\n\r" );
+        return 1;
+      }
+      else
+        {
+        printf( "SMS Worked\n\r" );
+        }
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
