@@ -374,7 +374,8 @@ uint8_t get_GPS(Cellular_module_t * const cell_ptr, uint8_t arg, char *buffer, u
 
 	}
 
-bool gGPS(Cellular_module_t * const cell_ptr ,float *lat, float *lon){
+bool gGPS(Cellular_module_t * const cell_ptr ,float *lat, float *lon)
+        {
 
 	flushInput( cell_ptr->uart_ptr );
 
@@ -382,7 +383,7 @@ bool gGPS(Cellular_module_t * const cell_ptr ,float *lat, float *lon){
 
 	uint8_t res_len = get_GPS(cell_ptr, 32, gpsbuffer, 120);
 
-	if (res_len == 0){
+	if (res_len == 0) {
 	    return false;
 	}
 
@@ -393,7 +394,7 @@ bool gGPS(Cellular_module_t * const cell_ptr ,float *lat, float *lon){
 				gps_start_ptr != gps_end && commas_seen != commas_to_see; ++commas_seen)
 		{
 		const char *gps_ptr = gps_start_ptr;
-		while( *gps_ptr != ',' ) { ++gps_ptr; } // Skipping until finds comma
+		while( gps_ptr != gps_end && *gps_ptr != ',' ) { ++gps_ptr; } // Skipping until finds comma
 		if ( commas_seen == 3 ) // Seen the <gps status, run status, time>
 			{
 			*lat = ( gps_ptr != gps_start_ptr ) ? atof( gps_start_ptr ) : 0.0;
@@ -406,4 +407,4 @@ bool gGPS(Cellular_module_t * const cell_ptr ,float *lat, float *lon){
 		} // end while
 	return commas_seen == commas_to_see;
 
-}
+	}
