@@ -391,9 +391,9 @@ bool gGPS(Cellular_module_t * const cell_ptr ,float *lat, float *lon)
 	int commas_seen = 0;
 
 	for ( const char *gps_start_ptr = gpsbuffer, * const gps_end = gpsbuffer + res_len;
-				gps_start_ptr < gps_end && commas_seen != commas_to_see; ++commas_seen )
+				gps_start_ptr != gps_end && commas_seen != commas_to_see; ++commas_seen )
 		{
-		const char *gps_ptr = gps_start_ptr;
+		const char *gps_ptr = ++gps_start_ptr; // Skips comma (All except the first execution)
 		while( gps_ptr != gps_end && *gps_ptr != ',' ) { ++gps_ptr; } // Skipping until finds comma
 		if ( commas_seen == 3 ) // Seen the <gps status, run status, time>
 			{
@@ -403,7 +403,7 @@ bool gGPS(Cellular_module_t * const cell_ptr ,float *lat, float *lon)
 			{
 			*lon = ( gps_ptr != gps_start_ptr ) ? atof( gps_start_ptr ) : 0.0;
 			} // end else if
-		gps_start_ptr = gps_ptr + 1; // Skip comma
+		gps_start_ptr = gps_ptr; // Skip comma
 		} // end for
 	
 	return commas_seen == commas_to_see;
