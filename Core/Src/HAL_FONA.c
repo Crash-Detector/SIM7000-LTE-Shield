@@ -403,7 +403,7 @@ bool gGPS(Cellular_module_t * const cell_ptr ,float *lat, float *lon)
 			{
 			*lon = ( gps_ptr != gps_start_ptr ) ? atof( gps_start_ptr ) : 0.0;
 			} // end else if
-		gps_start_ptr = gps_ptr; // Skip comma
+		gps_start_ptr = gps_ptr;
 		} // end for
 	
 	return commas_seen == commas_to_see;
